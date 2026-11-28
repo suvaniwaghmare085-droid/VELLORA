@@ -1,0 +1,96 @@
+const STORAGE_KEY = "vellora_books_v1";
+const QUEUE_KEY = "vellora_returns_v1";
+const sampleBooks = [
+ {id:"b1",title:"The Alchemist",author:"Paulo Coelho",isbn:"9780061122415",genre:"Fiction",shelf:"A",rack:"01",status:"Available",requests:42,readingStatus:"Completed",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780061122415-M.jpg",added:1},
+ {id:"b2",title:"Atomic Habits",author:"James Clear",isbn:"9780735211292",genre:"Self-help",shelf:"B",rack:"02",status:"Available",requests:36,readingStatus:"Currently Reading",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg",added:2},
+ {id:"b3",title:"Ikigai",author:"Héctor García & Francesc Miralles",isbn:"9780143130727",genre:"Psychology",shelf:"C",rack:"01",status:"Borrowed",requests:29,readingStatus:"Want to Read",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780143130727-M.jpg",added:3},
+ {id:"b4",title:"Pride and Prejudice",author:"Jane Austen",isbn:"9780141439518",genre:"Romance",shelf:"D",rack:"01",status:"Available",requests:24,readingStatus:"Want to Read",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg",added:4},
+ {id:"b5",title:"The Great Gatsby",author:"F. Scott Fitzgerald",isbn:"9780743273565",genre:"Fiction",shelf:"A",rack:"02",status:"Available",requests:18,readingStatus:"Want to Read",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg",added:5},
+ {id:"b6",title:"Harry Potter and the Philosopher's Stone",author:"J. K. Rowling",isbn:"9780747532699",genre:"Fantasy",shelf:"E",rack:"01",status:"Borrowed",requests:33,readingStatus:"Currently Reading",pagesRead:0,totalPages:0,cover:"https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg",added:6}
+];
+let books = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || sampleBooks;
+let returnQueue = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+let uploadedImage = "";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(books));localStorage.setItem(QUEUE_KEY,JSON.stringify(returnQueue));}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400);}
+function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));$("page-"+page).classList.add("active");document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.page===page));$("pageCrumb").textContent=({dashboard:"Overview",library:"My Library",tracker:"Reading Tracker",scanner:"Book Scanner",returns:"Return Desk",insights:"DSA Studio"})[page];$("sidebar").classList.remove("open");if(page==="dashboard")renderDashboard();if(page==="library")renderLibrary();if(page==="returns")renderReturns();if(page==="tracker")renderTracker();}
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+$("mobileMenu").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
+$("quickAdd").addEventListener("click",()=>go("scanner"));
+$("todayLabel").textContent=new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short",year:"numeric"}).format(new Date());
+function coverHTML(book){return `<div class="cover-wrap">${book.cover?`<img src="${esc(book.cover)}" alt="${esc(book.title)} cover" onerror="this.remove();this.parentElement.insertAdjacentHTML('afterbegin','<div class=cover-fallback>${esc(book.title)}</div>')">`:`<div class="cover-fallback">${esc(book.title)}</div>`}<span class="genre-pill">${esc(book.genre)}</span></div>`;}
+function cardHTML(book){return `<article class="book-card" data-book="${esc(book.id)}">${coverHTML(book)}<h3 title="${esc(book.title)}">${esc(book.title)}</h3><p>${esc(book.author||"Unknown author")}</p><div class="book-meta"><span>${esc(book.status)}</span><span>${esc(book.shelf||"—")}/${esc(book.rack||"—")}</span></div></article>`;}
+function renderDashboard(){const available=books.filter(b=>b.status==="Available").length;$("statTotal").textContent=books.length;$("statAvailable").textContent=available;$("statBorrowed").textContent=books.length-available;$("statGenres").textContent=new Set(books.map(b=>b.genre)).size;$("recentBooks").innerHTML=books.slice().sort((a,b)=>a.added-b.added).slice(0,5).map(cardHTML).join("")||"<p class='helper-line'>No books yet. Add one to begin.</p>";renderPopular();bindCards();}
+function renderPopular(){const sorted=[...books].sort((a,b)=>b.requests-a.requests).slice(0,5);$("popularList").innerHTML=sorted.map((b,i)=>`<div class="popular-row"><span class="rank">0${i+1}</span><div><strong>${esc(b.title)}</strong><small>${esc(b.author)}</small></div><span class="popular-count">${b.requests} requests</span></div>`).join("")||"<p class='helper-line'>No request data yet.</p>";}
+function renderLibrary(){const genres=[...new Set(books.map(b=>b.genre))].sort();$("genreFilter").innerHTML='<option value="">All genres</option>'+genres.map(g=>`<option>${esc(g)}</option>`).join("");const q=$("librarySearch").value.toLowerCase(),g=$("genreFilter").value,s=$("statusFilter").value,sort=$("sortFilter").value;let list=books.filter(b=>(b.title+" "+b.author+" "+b.isbn).toLowerCase().includes(q)&&(!g||b.genre===g)&&(!s||b.status===s));if(sort==="title")list.sort((a,b)=>a.title.localeCompare(b.title));else if(sort==="popular")list.sort((a,b)=>b.requests-a.requests);else list.sort((a,b)=>a.added-b.added);$("libraryBooks").innerHTML=list.map(cardHTML).join("");$("libraryEmpty").classList.toggle("hidden",list.length>0);bindCards();}
+["librarySearch","genreFilter","statusFilter","sortFilter"].forEach(id=>$(id).addEventListener(id==="librarySearch"?"input":"change",renderLibrary));
+function bindCards(){document.querySelectorAll(".book-card").forEach(c=>c.addEventListener("click",()=>showBook(c.dataset.book)));}
+function showBook(id){const b=books.find(x=>x.id===id);if(!b)return;$("modalContent").innerHTML=`<div class="modal-content">${b.cover?`<img src="${esc(b.cover)}" onerror="this.style.display='none'">`:`<div class="cover-fallback">${esc(b.title)}</div>`}<div><div class="eyebrow">${esc(b.genre)} · ${esc(b.status)}</div><h2>${esc(b.title)}</h2><p>By ${esc(b.author||"Unknown author")}<br>ISBN: ${esc(b.isbn||"Not recorded")}<br>Location: Shelf ${esc(b.shelf||"—")} · Rack ${esc(b.rack||"—")}<br>Requests: ${b.requests}</p><div class="modal-links"><button class="small-btn primary" onclick="requestBook('${b.id}')">Request book</button><button class="small-btn" onclick="editBook('${b.id}')">Edit details</button><button class="small-btn" onclick="removeBook('${b.id}')">Remove</button></div></div></div>`;$("bookModal").classList.remove("hidden");}
+$("modalClose").addEventListener("click",()=>$("bookModal").classList.add("hidden"));$("bookModal").addEventListener("click",e=>{if(e.target===$("bookModal"))$("bookModal").classList.add("hidden");});
+window.requestBook=id=>{const b=books.find(x=>x.id===id);if(!b)return;b.requests++;save();renderDashboard();renderLibrary();showBook(id);toast("Request count updated.");};
+window.removeBook=id=>{if(!confirm("Remove this book from your collection?"))return;books=books.filter(b=>b.id!==id);save();$("bookModal").classList.add("hidden");renderDashboard();renderLibrary();toast("Book removed.");};
+window.editBook=id=>{const b=books.find(x=>x.id===id);if(!b)return;$("bookTitle").value=b.title;$("bookAuthor").value=b.author;$("bookIsbn").value=b.isbn;$("bookGenre").value=b.genre;$("bookStatus").value=b.status;$("bookShelf").value=b.shelf;$("bookRack").value=b.rack;$("bookReadingStatus").value=b.readingStatus||"Want to Read";$("bookTotalPages").value=b.totalPages||"";$("bookForm").dataset.editId=id;$("bookModal").classList.add("hidden");go("scanner");toast("Edit the details and save.");};
+function genreFor(text){const t=text.toLowerCase();if(/romance|love|marriage/.test(t))return"Romance";if(/mystery|detective|crime|thriller/.test(t))return"Mystery";if(/magic|wizard|dragon|fantasy/.test(t))return"Fantasy";if(/science fiction|space|robot|dystopia/.test(t))return"Science Fiction";if(/habit|success|self.help|productivity/.test(t))return"Self-help";if(/psychology|mind|brain/.test(t))return"Psychology";if(/history|war|empire/.test(t))return"History";if(/programming|computer|software|java|python/.test(t))return"Technology";if(/biography|memoir|life of/.test(t))return"Biography";return"Fiction";}
+function shelfFor(genre){const map={Fiction:"A",Romance:"B",Mystery:"C",Fantasy:"D","Science Fiction":"E","Self-help":"F",Psychology:"G",Technology:"H",History:"I",Biography:"J",Other:"K"};return map[genre]||"K";}
+$("bookForm").addEventListener("submit",e=>{e.preventDefault();const title=$("bookTitle").value.trim(),isbn=$("bookIsbn").value.trim();if(isbn&&books.some(b=>b.isbn===isbn&&b.id!==$("bookForm").dataset.editId)){toast("Duplicate ISBN detected — this book is already in your library.");return;}const genre=$("bookGenre").value;const record={id:$("bookForm").dataset.editId||"b"+Date.now(),title,author:$("bookAuthor").value.trim(),isbn,genre,shelf:$("bookShelf").value.trim()||shelfFor(genre),rack:$("bookRack").value.trim()||String(books.filter(b=>b.genre===genre).length+1).padStart(2,"0"),status:$("bookStatus").value,requests:0,readingStatus:$("bookReadingStatus").value,totalPages:Math.max(0,Number($("bookTotalPages").value)||0),pagesRead:0,cover:uploadedImage||"",added:Date.now()};if($("bookForm").dataset.editId){const i=books.findIndex(b=>b.id===$("bookForm").dataset.editId);if(i>=0){record.requests=books[i].requests;record.readingStatus=books[i].readingStatus||"Want to Read";record.totalPages=Number($("bookTotalPages").value)||books[i].totalPages||0;record.pagesRead=books[i].pagesRead||0;record.cover=uploadedImage||books[i].cover||"";}books[i]=record;delete $("bookForm").dataset.editId;}else books.unshift(record);save();$("bookForm").reset();$("coverPreview").classList.add("hidden");$("uploadZone").querySelectorAll("strong,small,.upload-symbol").forEach(x=>x.classList.remove("hidden"));uploadedImage="";renderDashboard();toast("Your book has found a home in VELLORA.");go("library");});
+$("coverUpload").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{uploadedImage=reader.result;$("coverPreview").src=uploadedImage;$("coverPreview").classList.remove("hidden");$("uploadZone").querySelectorAll("strong,small,.upload-symbol").forEach(x=>x.classList.add("hidden"));$("scanButton").disabled=false;};reader.readAsDataURL(f);});
+$("scanButton").addEventListener("click",async()=>{if(!uploadedImage)return;$("ocrStatus").textContent="Reading image… this may take a moment.";try{if(!window.Tesseract)throw Error("OCR library unavailable");const result=await Tesseract.recognize(uploadedImage,"eng");const text=result.data.text||"";const isbn=(text.match(/(?:97[89][-\s]?)?(?:\d[-\s]?){9,12}\d/)||[])[0]?.replace(/\D/g,"")||"";$("bookIsbn").value=isbn;if(isbn.length>=10){await lookupIsbn(isbn);$("ocrStatus").textContent="Text extracted. ISBN lookup attempted — review the details before saving.";}else{$("ocrStatus").textContent="Text extracted, but no clear ISBN was found. Enter the title or ISBN manually.";}if(!$("bookTitle").value){const lines=text.split("\n").map(x=>x.trim()).filter(x=>x.length>2);if(lines[0])$("bookTitle").value=lines[0].slice(0,90);}}catch(err){$("ocrStatus").textContent="OCR could not run: "+err.message+". You can still enter book details manually.";}});
+async function lookupIsbn(isbn){try{const r=await fetch("https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn));const d=await r.json();if(d.items?.length){const v=d.items[0].volumeInfo;$("bookTitle").value=v.title||$("bookTitle").value;$("bookAuthor").value=(v.authors||[]).join(", ");const g=genreFor((v.categories||[]).join(" ")+ " "+(v.title||""));$("bookGenre").value=[...$("bookGenre").options].some(o=>o.value===g)?g:"Other";}}catch(e){}}
+$("returnForm").addEventListener("submit",e=>{e.preventDefault();const id=$("returnBook").value;if(!id){toast("No book selected.");return;}const b=books.find(x=>x.id===id);if(!b)return;returnQueue.push({id:b.id,title:b.title,author:b.author});save();renderReturns();toast("Added to the return queue.");});
+function renderReturns(){$("returnBook").innerHTML=books.map(b=>`<option value="${esc(b.id)}">${esc(b.title)} — ${esc(b.status)}</option>`).join("")||"<option value=''>No books in library</option>";$("queueCount").textContent=returnQueue.length+" WAITING";$("queueList").innerHTML=returnQueue.map((b,i)=>`<div class="queue-item"><span class="queue-number">${i+1}</span><div><strong>${esc(b.title)}</strong><small>${esc(b.author||"")}</small></div></div>`).join("")||"<p class='helper-line'>The queue is empty. Returned books will appear here.</p>";}
+$("processReturn").addEventListener("click",()=>{const item=returnQueue.shift();if(!item){$("returnNotice").textContent="There are no returns waiting.";return;}const b=books.find(x=>x.id===item.id);if(b)b.status="Available";save();renderReturns();renderDashboard();$("returnNotice").textContent=`Processed: ${item.title}. Availability updated.`;});
+$("clearQueue").addEventListener("click",()=>{returnQueue=[];save();renderReturns();$("returnNotice").textContent="Queue cleared.";});
+document.querySelectorAll("[data-dsa]").forEach(btn=>btn.addEventListener("click",()=>{const type=btn.dataset.dsa,box=$("demo-"+type);box.classList.toggle("hidden");if(!box.classList.contains("hidden")){const sorted=[...books].sort((a,b)=>a.title.localeCompare(b.title));const top=[...books].sort((a,b)=>b.requests-a.requests);const html={hash:`ISBN index contains ${books.filter(b=>b.isbn).length} ISBN key(s). Example lookup: <b>${esc(books[0]?.isbn||"No ISBN")}</b> → ${esc(books[0]?.title||"No books")}.`,bst:`Inorder traversal (alphabetical):<br>${sorted.map(b=>"• "+esc(b.title)).join("<br>")||"No records"}`,queue:`FIFO order:<br>${returnQueue.map((b,i)=>(i+1)+". "+esc(b.title)).join("<br>")||"Queue is empty"}`,heap:`Max-heap priority order (requests):<br>${top.map((b,i)=>(i+1)+". "+esc(b.title)+" — "+b.requests).join("<br>")||"No records"}`,set:`ISBN set size: ${new Set(books.map(b=>b.isbn).filter(Boolean)).size}. Duplicate insertion is rejected before saving.`};box.innerHTML=html[type];}}));
+
+const GOAL_KEY="vellora_reading_goal_v1";
+function renderTracker(){
+  const active=books.filter(b=>(b.readingStatus||"Want to Read")==="Currently Reading");
+  const completed=books.filter(b=>b.readingStatus==="Completed");
+  const pages=books.reduce((n,b)=>n+(Number(b.pagesRead)||0),0);
+  $("trackingActive").textContent=active.length;
+  $("trackingCompleted").textContent=completed.length;
+  $("trackingPages").textContent=pages.toLocaleString("en-IN");
+  const goal=Math.max(1,Number(localStorage.getItem(GOAL_KEY))||12);
+  $("readingGoal").value=goal;
+  $("goalLabel").textContent=`${completed.length} of ${goal} books completed`;
+  const pct=Math.min(100,Math.round(completed.length/goal*100));
+  $("goalPercent").textContent=pct+"%";$("goalBar").style.width=pct+"%";
+  const filter=$("trackerFilter").value;
+  const list=books.filter(b=>!filter||(b.readingStatus||"Want to Read")===filter);
+  $("trackerBooks").innerHTML=list.map(b=>{
+    const total=Math.max(0,Number(b.totalPages)||0),read=Math.max(0,Number(b.pagesRead)||0);
+    const progress=total?Math.min(100,Math.round(read/total*100)):(b.readingStatus==="Completed"?100:0);
+    return `<article class="tracker-card" data-track-id="${esc(b.id)}">
+      <div class="tracker-card-top"><div class="tracker-cover">${b.cover?`<img src="${esc(b.cover)}" alt="" onerror="this.style.display='none'">`:`<span>${esc((b.title||"V").slice(0,1))}</span>`}</div><div class="tracker-book-info"><span class="eyebrow">${esc(b.genre||"BOOK")}</span><h3>${esc(b.title)}</h3><p>${esc(b.author||"Unknown author")}</p></div></div>
+      <label class="tracker-label">Reading status<select class="track-status"><option ${(!b.readingStatus||b.readingStatus==="Want to Read")?"selected":""}>Want to Read</option><option ${b.readingStatus==="Currently Reading"?"selected":""}>Currently Reading</option><option ${b.readingStatus==="Completed"?"selected":""}>Completed</option></select></label>
+      <div class="page-inputs"><label class="tracker-label">Pages read<input class="track-read" type="number" min="0" value="${read}"></label><label class="tracker-label">Total pages<input class="track-total" type="number" min="0" value="${total||""}" placeholder="Optional"></label></div>
+      <div class="progress-track"><span style="width:${progress}%"></span></div><div class="tracker-progress-label"><span>${total?`${Math.min(read,total)} / ${total} pages`:"Add total pages to calculate progress"}</span><b>${progress}%</b></div>
+      <button class="btn btn-outline full-width track-save">Save progress</button><div class="track-message" aria-live="polite"></div>
+    </article>`;
+  }).join("");
+  $("trackerEmpty").classList.toggle("hidden",list.length>0);
+}
+$("trackerFilter").addEventListener("change",renderTracker);
+$("saveGoal").addEventListener("click",()=>{const n=Math.max(1,Math.min(365,Number($("readingGoal").value)||12));localStorage.setItem(GOAL_KEY,String(n));renderTracker();toast("Reading goal saved.");});
+$("trackerBooks").addEventListener("click",e=>{
+  const button=e.target.closest(".track-save");if(!button)return;
+  const card=button.closest("[data-track-id]"),book=books.find(b=>b.id===card.dataset.trackId);if(!book)return;
+  const total=Math.max(0,Number(card.querySelector(".track-total").value)||0);
+  const read=Math.max(0,Number(card.querySelector(".track-read").value)||0);
+  if(total&&read>total){card.querySelector(".track-message").textContent="Pages read cannot exceed total pages.";return;}
+  book.totalPages=total;book.pagesRead=read;book.readingStatus=card.querySelector(".track-status").value;
+  if(book.readingStatus==="Completed"&&total)book.pagesRead=total;
+  save();renderTracker();renderDashboard();toast("Reading progress updated.");
+});
+$("exportBooks").addEventListener("click",()=>{
+  const headers=["Title","Author","ISBN","Genre","Availability","Reading Status","Pages Read","Total Pages","Shelf","Rack","Requests"];
+  const rows=books.map(b=>[b.title,b.author,b.isbn,b.genre,b.status,b.readingStatus||"Want to Read",b.pagesRead||0,b.totalPages||0,b.shelf,b.rack,b.requests||0]);
+  const csv=[headers,...rows].map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="vellora-library.csv";a.click();URL.revokeObjectURL(url);toast("Library exported as CSV.");
+});
+
+renderDashboard();renderLibrary();renderReturns();

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10131b" />
+  <title>VELLORA — Your Personal World of Books</title>
+  <meta name="description" content="A smart digital library to organize your collection and track your reading." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" data-page="dashboard">
+        <span class="brand-mark">V</span>
+        <span><strong>VELLORA</strong><small>YOUR WORLD OF BOOKS</small></span>
+      </a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav">
+        <button class="nav-link active" data-page="dashboard"><span>⌂</span> Overview</button>
+        <button class="nav-link" data-page="library"><span>▤</span> My Library</button>
+        <button class="nav-link" data-page="tracker"><span>◷</span> Reading Tracker</button>
+        <button class="nav-link" data-page="scanner"><span>▧</span> Book Scanner</button>
+        <button class="nav-link" data-page="returns"><span>↶</span> Return Desk</button>
+        <button class="nav-link" data-page="insights"><span>⌁</span> DSA Studio</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-note"><span class="spark">✦</span><p>Every book holds a world. Find yours.</p></div>
+        <div class="profile"><div class="avatar">V</div><div><strong>Reader's Space</strong><small>Personal collection</small></div><span class="dots">•••</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+        <div class="breadcrumb">VELLORA <span>/</span> <b id="pageCrumb">Overview</b></div>
+        <div class="top-actions"><span class="date-label" id="todayLabel"></span><button class="icon-button" id="quickAdd" title="Add a book">＋</button></div>
+      </header>
+
+      <section class="page active" id="page-dashboard">
+        <div class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span></span> YOUR PERSONAL LIBRARY</div>
+            <h1>A world of stories,<br><em>beautifully</em> organized.</h1>
+            <p>Keep your collection in order, track your reading progress, and make every reading goal count.</p>
+            <div class="hero-actions"><button class="btn btn-gold" data-go="tracker">Reading tracker <span>↗</span></button><button class="btn btn-quiet" data-go="scanner">＋ Add a book</button></div>
+          </div>
+          <div class="hero-art" aria-label="Decorative books illustration">
+            <div class="orb orb-one"></div><div class="orb orb-two"></div>
+            <div class="book-stack"><div class="book book-a"></div><div class="book book-b"></div><div class="book book-c"></div><div class="book book-d"></div></div>
+            <div class="art-caption">A QUIETER KIND OF DISCOVERY <span>✦</span></div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span>Total books</span><span class="stat-icon">▤</span></div><strong id="statTotal">0</strong><small>In your collection</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Available</span><span class="stat-icon green">✓</span></div><strong id="statAvailable">0</strong><small>Ready to be read</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Borrowed</span><span class="stat-icon">↗</span></div><strong id="statBorrowed">0</strong><small>Currently away</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Genres</span><span class="stat-icon">✧</span></div><strong id="statGenres">0</strong><small>Worlds explored</small></article>
+        </div>
+        <div class="section-heading"><div><div class="eyebrow">A FEW GOOD READS</div><h2>Recently added</h2></div><button class="text-link" data-go="library">View collection ↗</button></div>
+        <div class="book-grid" id="recentBooks"></div>
+        <div class="bottom-grid">
+          <section class="panel"><div class="panel-heading"><div><div class="eyebrow">READER FAVOURITES</div><h3>Most requested</h3></div><span class="mini-tag">MAX HEAP</span></div><div id="popularList" class="popular-list"></div></section>
+          <section class="panel quote-panel"><div class="quote-mark">“</div><p>A reader lives a thousand lives before he dies. The man who never reads lives only one.</p><small>— George R. R. Martin</small><div class="quote-decoration">V.</div></section>
+        </div>
+      </section>
+
+      <section class="page" id="page-library">
+        <div class="page-heading"><div><div class="eyebrow">YOUR COLLECTION</div><h1>My Library</h1><p>Every title, in its place.</p></div><div class="heading-actions"><button class="btn btn-outline" id="exportBooks">↓ Export CSV</button><button class="btn btn-gold" data-go="scanner">＋ Add a book</button></div></div>
+        <div class="toolbar"><div class="searchbox"><span>⌕</span><input id="librarySearch" placeholder="Search title, author or ISBN..." /></div><select id="genreFilter"><option value="">All genres</option></select><select id="statusFilter"><option value="">All availability</option><option>Available</option><option>Borrowed</option></select><select id="sortFilter"><option value="recent">Recently added</option><option value="title">Title A–Z</option><option value="popular">Most requested</option></select></div>
+        <div class="book-grid" id="libraryBooks"></div>
+        <div class="empty-state hidden" id="libraryEmpty"><span>✧</span><h3>Your shelves are waiting</h3><p>Add your first book to begin building your collection.</p><button class="btn btn-gold" data-go="scanner">Add a book</button></div>
+      </section>
+
+      <section class="page" id="page-tracker">
+        <div class="page-heading"><div><div class="eyebrow">BUILD A READING HABIT</div><h1>Reading Tracker</h1><p>Track pages, celebrate progress, and keep your reading goals in sight.</p></div></div>
+        <div class="tracker-summary">
+          <article class="stat-card"><div class="stat-top"><span>Currently reading</span><span class="stat-icon">◷</span></div><strong id="trackingActive">0</strong><small>Books in progress</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Completed</span><span class="stat-icon green">✓</span></div><strong id="trackingCompleted">0</strong><small>Books finished</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Pages read</span><span class="stat-icon">▤</span></div><strong id="trackingPages">0</strong><small>Across your collection</small></article>
+        </div>
+        <div class="panel goal-panel"><div><div class="eyebrow">YOUR READING GOAL</div><h3>Make time for a few more pages.</h3><p>Set a target for how many books you want to finish.</p></div><div class="goal-control"><input type="number" id="readingGoal" min="1" max="365" value="12" aria-label="Annual reading goal"><span>books / year</span><button class="btn btn-gold" id="saveGoal">Save goal</button></div><div class="goal-progress"><div class="goal-progress-top"><span id="goalLabel">0 of 12 books completed</span><b id="goalPercent">0%</b></div><div class="progress-track"><span id="goalBar"></span></div></div></div>
+        <div class="section-heading tracker-heading"><div><div class="eyebrow">YOUR READING SHELF</div><h2>Update your progress</h2></div><select id="trackerFilter"><option value="">All books</option><option value="Currently Reading">Currently reading</option><option value="Want to Read">Want to read</option><option value="Completed">Completed</option></select></div>
+        <div id="trackerBooks" class="tracker-grid"></div>
+        <div class="empty-state hidden" id="trackerEmpty"><span>✧</span><h3>No books to track yet</h3><p>Add books to your library, then update their reading progress here.</p><button class="btn btn-gold" data-go="scanner">Add a book</button></div>
+      </section>
+
+      <section class="page" id="page-scanner">
+        <div class="page-heading"><div><div class="eyebrow">ADD TO YOUR WORLD</div><h1>Smart Book Scanner</h1><p>Upload a cover, identify the title, and give it a home.</p></div></div>
+        <div class="scanner-layout">
+          <div class="panel upload-panel"><div class="panel-heading"><div><div class="eyebrow">STEP 01</div><h3>Upload book cover</h3></div><span class="mini-tag">IMAGE / ISBN</span></div>
+            <label class="upload-zone" for="coverUpload" id="uploadZone"><span class="upload-symbol">＋</span><strong>Drop a book cover here</strong><small>or click to browse · JPG, PNG, WEBP</small><img id="coverPreview" alt="Uploaded book cover preview" class="hidden" /></label>
+            <input type="file" id="coverUpload" accept="image/*" hidden />
+            <button class="btn btn-outline full-width" id="scanButton" disabled>Extract text from image</button>
+            <div class="helper-line">OCR runs in your browser. ISBN detection works best when the number is visible and clear.</div>
+            <div id="ocrStatus" class="status-line"></div>
+          </div>
+          <div class="panel form-panel"><div class="panel-heading"><div><div class="eyebrow">STEP 02</div><h3>Book details</h3></div><span class="mini-tag">CONFIRM BEFORE SAVING</span></div>
+            <form id="bookForm">
+              <label>Book title<input id="bookTitle" required placeholder="e.g. The Midnight Library" /></label>
+              <div class="form-row"><label>Author<input id="bookAuthor" placeholder="Author name" /></label><label>ISBN<input id="bookIsbn" placeholder="ISBN-13 or ISBN-10" /></label></div>
+              <div class="form-row"><label>Genre<select id="bookGenre"><option>Fiction</option><option>Romance</option><option>Mystery</option><option>Fantasy</option><option>Science Fiction</option><option>Self-help</option><option>Psychology</option><option>Technology</option><option>History</option><option>Biography</option><option>Other</option></select></label><label>Condition<select id="bookStatus"><option>Available</option><option>Borrowed</option></select></label></div>
+              <div class="form-row"><label>Shelf<input id="bookShelf" placeholder="Auto: A" /></label><label>Rack<input id="bookRack" placeholder="Auto: 01" /></label></div>
+              <div class="form-row"><label>Reading status<select id="bookReadingStatus"><option>Want to Read</option><option>Currently Reading</option><option>Completed</option></select></label><label>Total pages<input id="bookTotalPages" type="number" min="1" placeholder="e.g. 320" /></label></div>
+              <button class="btn btn-gold full-width" type="submit">Add to my library <span>↗</span></button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-returns">
+        <div class="page-heading"><div><div class="eyebrow">COLLECTION OPERATIONS</div><h1>Return Desk</h1><p>Returned books are processed in first-in, first-out order.</p></div><span class="mini-tag large-tag">FIFO QUEUE</span></div>
+        <div class="returns-layout"><div class="panel"><div class="panel-heading"><div><div class="eyebrow">RETURN INTAKE</div><h3>Add a returned book</h3></div></div><form id="returnForm"><label>Select book<select id="returnBook"></select></label><button class="btn btn-gold full-width">Add to return queue</button></form><div class="queue-actions"><button class="btn btn-outline" id="processReturn">Process next return</button><button class="btn btn-quiet" id="clearQueue">Clear queue</button></div><div id="returnNotice" class="message-area"></div></div><div class="panel"><div class="panel-heading"><div><div class="eyebrow">PROCESSING LINE</div><h3>Return queue</h3></div><span class="mini-tag" id="queueCount">0 WAITING</span></div><div id="queueList" class="queue-list"></div></div></div>
+      </section>
+
+      <section class="page" id="page-insights">
+        <div class="page-heading"><div><div class="eyebrow">UNDER THE HOOD</div><h1>DSA Studio</h1><p>Explore the data structures that power VELLORA.</p></div><span class="mini-tag large-tag">JAVA + DSA</span></div>
+        <div class="dsa-grid">
+          <article class="dsa-card"><div class="dsa-icon">#</div><h3>Hash Table</h3><p>Maps ISBN keys to book records for fast lookup.</p><div class="complexity"><span>Average search</span><b>O(1)</b></div><button data-dsa="hash" class="text-link">Try ISBN lookup ↗</button><div class="dsa-demo hidden" id="demo-hash"></div></article>
+          <article class="dsa-card"><div class="dsa-icon">⑂</div><h3>Binary Search Tree</h3><p>Stores titles in an ordered tree; inorder traversal sorts them.</p><div class="complexity"><span>Average search</span><b>O(log n)</b></div><button data-dsa="bst" class="text-link">View sorted titles ↗</button><div class="dsa-demo hidden" id="demo-bst"></div></article>
+          <article class="dsa-card"><div class="dsa-icon">⇥</div><h3>Queue</h3><p>Returned books wait in FIFO order: first in, first out.</p><div class="complexity"><span>Enqueue / dequeue</span><b>O(1)</b></div><button data-dsa="queue" class="text-link">View return queue ↗</button><div class="dsa-demo hidden" id="demo-queue"></div></article>
+          <article class="dsa-card"><div class="dsa-icon">♛</div><h3>Max Heap</h3><p>Ranks books by request count, keeping the most popular at the top.</p><div class="complexity"><span>Insert / extract</span><b>O(log n)</b></div><button data-dsa="heap" class="text-link">View popularity ranking ↗</button><div class="dsa-demo hidden" id="demo-heap"></div></article>
+          <article class="dsa-card"><div class="dsa-icon">✓</div><h3>HashSet</h3><p>Tracks ISBNs already present to prevent duplicate records.</p><div class="complexity"><span>Average contains</span><b>O(1)</b></div><button data-dsa="set" class="text-link">Check duplicates ↗</button><div class="dsa-demo hidden" id="demo-set"></div></article>
+        </div>
+        <div class="panel java-panel"><div><div class="eyebrow">ACADEMIC IMPLEMENTATION</div><h3>Actual Java source code included</h3><p>The <code>java/</code> folder contains manually implemented HashTable, BST, Queue, Max Heap and duplicate detection classes, plus a runnable demonstration in <code>Main.java</code>.</p></div><span class="java-badge">JAVA</span></div>
+      </section>
+
+      <footer class="footer"><span>VELLORA © 2026</span><span>Made for the love of stories <b>✦</b></span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="modal-backdrop hidden" id="bookModal"><div class="modal"><button class="modal-close" id="modalClose">×</button><div id="modalContent"></div></div></div>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
